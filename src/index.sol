@@ -82,7 +82,14 @@ struct Experience {
     //Getter functions
 
     function getWork(address whose)  public returns (address, address, string memory, string memory,uint256,uint256) {
+        address ad_where = Workmap[whose].a_where;
+        string memory st_where = Workmap[whose].s_where;
+        string memory st_what = Workmap[whose].s_what;
+        uint256 start_time = Workmap[whose].start_timestamp;
+        uint256 end_time = Workmap[whose].end_timestamp;
         
+
+
         
     }
 
