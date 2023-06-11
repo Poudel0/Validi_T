@@ -14,3 +14,4 @@ docs/
 .env
 
 Template.sol
+node_modules
