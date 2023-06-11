@@ -1,96 +1,154 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.8;
 
-// import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract WEE is AccessControl {
-    bytes32 private constant INSTITUTION = keccak256("INSTITUTION");
-    bytes32 private constant INDIVIDUAL = keccak256("INDIVIDUAL");
+    bytes32 public constant INSTITUTION = keccak256("INSTITUTION");
+    bytes32 public constant INDIVIDUAL = keccak256("INDIVIDUAL");
 
     struct Work {
-        address a_where;
-        string s_where;
-        string s_what;
-        uint256 start_timestamp;
-        uint256 end_timestamp;
-        bool isverified;
+        address location;
+        string locationString;
+        string role;
+        uint256 startTime;
+        uint256 endTime;
+        bool verified;
     }
+
     struct Education {
-        address a_where;
-        string s_where;
-        string s_what;
-        uint256 start_timestamp;
-        uint256 end_timestamp;
-        bool isverified;
+        address institution;
+        string institutionString;
+        string degree;
+        uint256 startTime;
+        uint256 endTime;
+        bool verified;
     }
+
     struct Experience {
-        address a_where;
-        string s_where;
-        string s_what;
-        uint256 start_timestamp;
-        uint256 end_timestamp;
-        bool isverified;
+        address company;
+        string companyString;
+        string role;
+        uint256 startTime;
+        uint256 endTime;
+        bool verified;
+    }
+
+    mapping(address => Work) public workMap;
+    mapping(address => Education) public educationMap;
+    mapping(address => Experience) public experienceMap;
+
+    event WorkSet(
+        address indexed whose,
+        address indexed location,
+        string locationString,
+        string role,
+        uint256 startTime,
+        uint256 endTime
+    );
+    event EducationSet(
+        address indexed whose,
+        address indexed institution,
+        string institutionString,
+        string degree,
+        uint256 startTime,
+        uint256 endTime
+    );
+    event ExperienceSet(
+        address indexed whose,
+        address indexed company,
+        string companyString,
+        string role,
+        uint256 startTime,
+        uint256 endTime
+    );
+    event WorkVerified(address indexed whose);
+    event EducationVerified(address indexed whose);
+    event ExperienceVerified(address indexed whose);
+
+    modifier validAddress(address addr) {
+        require(addr != address(0), "Invalid address");
+        _;
     }
 
     constructor() {
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(INSTITUTION, msg.sender);
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setupRole(INSTITUTION, msg.sender);
     }
-
-    // Mapping defined
-    mapping(address => Work) public Workmap;
-    mapping(address => Education) public Educationmap;
-    mapping(address => Experience) public Experiencemap;
-
-    //Setter functions
 
     function setWork(
         address whose,
-        address where,
-        string memory swhere,
-        string memory what,
-        uint256 start,
-        uint256 end
-    ) public onlyRole(INDIVIDUAL) {
-        Workmap[whose].a_where = where;
-        Workmap[whose].s_where = swhere;
-        Workmap[whose].s_what = what;
-        Workmap[whose].start_timestamp = start;
-        Workmap[whose].end_timestamp = end;
+        address location,
+        string memory locationString,
+        string memory role,
+        uint256 startTime,
+        uint256 endTime
+    ) public onlyRole(INDIVIDUAL) validAddress(location) {
+        require(startTime < endTime, "Invalid time period");
+
+        Work storage work = workMap[whose];
+        work.location = location;
+        work.locationString = locationString;
+        work.role = role;
+        work.startTime = startTime;
+        work.endTime = endTime;
+
+        emit WorkSet(whose, location, locationString, role, startTime, endTime);
     }
 
     function setEducation(
         address whose,
-        address where,
-        string memory swhere,
-        string memory what,
-        uint256 start,
-        uint256 end
-    ) public onlyRole(INDIVIDUAL) {
-        Educationmap[whose].a_where = where;
-        Educationmap[whose].s_where = swhere;
-        Educationmap[whose].s_what = what;
-        Educationmap[whose].start_timestamp = start;
-        Educationmap[whose].end_timestamp = end;
+        address institution,
+        string memory institutionString,
+        string memory degree,
+        uint256 startTime,
+        uint256 endTime
+    ) public onlyRole(INDIVIDUAL) validAddress(institution) {
+        require(startTime < endTime, "Invalid time period");
+
+        Education storage education = educationMap[whose];
+        education.institution = institution;
+        education.institutionString = institutionString;
+        education.degree = degree;
+        education.startTime = startTime;
+        education.endTime = endTime;
+
+        emit EducationSet(
+            whose,
+            institution,
+            institutionString,
+            degree,
+            startTime,
+            endTime
+        );
     }
 
     function setExperience(
         address whose,
-        address where,
-        string memory swhere,
-        string memory what,
-        uint256 start,
-        uint256 end
-    ) public onlyRole(INDIVIDUAL) {
-        Experiencemap[whose].a_where = where;
-        Experiencemap[whose].s_where = swhere;
-        Experiencemap[whose].s_what = what;
-        Experiencemap[whose].start_timestamp = start;
-        Experiencemap[whose].end_timestamp = end;
-    }
+        address company,
+        string memory companyString,
+        string memory role,
+        uint256 startTime,
+        uint256 endTime
+    ) public onlyRole(INDIVIDUAL) validAddress(company) {
+        require(startTime < endTime, "Invalid time period");
 
-    //Getter functions
+        Experience storage experience = experienceMap[whose];
+        experience.company = company;
+        experience.companyString = companyString;
+        experience.role = role;
+        experience.startTime = startTime;
+        experience.endTime = endTime;
+
+        emit ExperienceSet(
+            whose,
+            company,
+            companyString,
+            role,
+            startTime,
+            endTime
+        );
+    }
 
     function getWork(
         address whose
@@ -98,20 +156,23 @@ contract WEE is AccessControl {
         public
         view
         returns (
-            address ad_where,
-            string memory st_where,
-            string memory st_what,
-            uint256 start_time,
-            uint256 end_time,
+            address location,
+            string memory locationString,
+            string memory role,
+            uint256 startTime,
+            uint256 endTime,
             bool verified
         )
     {
-        ad_where = Workmap[whose].a_where;
-        st_where = Workmap[whose].s_where;
-        st_what = Workmap[whose].s_what;
-        start_time = Workmap[whose].start_timestamp;
-        end_time = Workmap[whose].end_timestamp;
-        verified = Workmap[whose].isverified;
+        Work storage work = workMap[whose];
+        return (
+            work.location,
+            work.locationString,
+            work.role,
+            work.startTime,
+            work.endTime,
+            work.verified
+        );
     }
 
     function getEducation(
@@ -120,20 +181,23 @@ contract WEE is AccessControl {
         public
         view
         returns (
-            address ad_where,
-            string memory st_where,
-            string memory st_what,
-            uint256 start_time,
-            uint256 end_time,
+            address institution,
+            string memory institutionString,
+            string memory degree,
+            uint256 startTime,
+            uint256 endTime,
             bool verified
         )
     {
-        ad_where = Educationmap[whose].a_where;
-        st_where = Educationmap[whose].s_where;
-        st_what = Educationmap[whose].s_what;
-        start_time = Educationmap[whose].start_timestamp;
-        end_time = Educationmap[whose].end_timestamp;
-        verified = Educationmap[whose].isverified;
+        Education storage education = educationMap[whose];
+        return (
+            education.institution,
+            education.institutionString,
+            education.degree,
+            education.startTime,
+            education.endTime,
+            education.verified
+        );
     }
 
     function getExperience(
@@ -142,43 +206,61 @@ contract WEE is AccessControl {
         public
         view
         returns (
-            address ad_where,
-            string memory st_where,
-            string memory st_what,
-            uint256 start_time,
-            uint256 end_time,
+            address company,
+            string memory companyString,
+            string memory role,
+            uint256 startTime,
+            uint256 endTime,
             bool verified
         )
     {
-        ad_where = Experiencemap[whose].a_where;
-        st_where = Experiencemap[whose].s_where;
-        st_what = Experiencemap[whose].s_what;
-        start_time = Experiencemap[whose].start_timestamp;
-        end_time = Experiencemap[whose].end_timestamp;
-        verified = Experiencemap[whose].isverified;
+        Experience storage experience = experienceMap[whose];
+        return (
+            experience.company,
+            experience.companyString,
+            experience.role,
+            experience.startTime,
+            experience.endTime,
+            experience.verified
+        );
     }
 
     function verifyEducation(
         address whose
     ) public onlyRole(INSTITUTION) returns (bool) {
-        require(Educationmap[whose].a_where == msg.sender);
-        Educationmap[whose].isverified = true;
+        require(
+            educationMap[whose].institution == msg.sender,
+            "Unauthorized verification"
+        );
+        educationMap[whose].verified = true;
+
+        emit EducationVerified(whose);
         return true;
     }
 
     function verifyWork(
         address whose
     ) public onlyRole(INSTITUTION) returns (bool) {
-        require(Workmap[whose].a_where == msg.sender);
-        Workmap[whose].isverified = true;
+        require(
+            workMap[whose].location == msg.sender,
+            "Unauthorized verification"
+        );
+        workMap[whose].verified = true;
+
+        emit WorkVerified(whose);
         return true;
     }
 
     function verifyExperience(
         address whose
     ) public onlyRole(INSTITUTION) returns (bool) {
-        require(Experiencemap[whose].a_where == msg.sender);
-        Experiencemap[whose].isverified = true;
+        require(
+            experienceMap[whose].company == msg.sender,
+            "Unauthorized verification"
+        );
+        experienceMap[whose].verified = true;
+
+        emit ExperienceVerified(whose);
         return true;
     }
 }
